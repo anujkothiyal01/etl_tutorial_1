@@ -1,0 +1,4 @@
+ID,Name,Email,Salary,JoinDate
+1,Alice,alice@example.com,50000,2023-01-15
+2,Bob,bob@example.com,60000,2023-05-20
+3,Charlie,charlie@example.com,70000,2023-08-10
