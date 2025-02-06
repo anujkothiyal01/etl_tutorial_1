@@ -1,0 +1,42 @@
+import boto3
+import pandas as pd
+from io import StringIO
+
+# Define S3 client
+s3 = boto3.client("s3")
+
+# Define input and output S3 paths
+bucket_name = "your-bucket-name"
+input_prefix = "raw-data/"
+output_prefix = "processed-data/"
+
+# List objects in raw-data folder
+response = s3.list_objects_v2(Bucket=bucket_name, Prefix=input_prefix)
+
+# Process only the first file found
+if "Contents" in response:
+    for obj in response["Contents"]:
+        file_key = obj["Key"]
+        
+        if file_key.endswith(".csv"):  # Ensure it's a CSV file
+            print(f"Processing file: {file_key}")
+            
+            # Read file from S3
+            csv_obj = s3.get_object(Bucket=bucket_name, Key=file_key)
+            csv_content = csv_obj["Body"].read().decode("utf-8")
+            
+            # Load CSV into pandas
+            df = pd.read_csv(StringIO(csv_content))
+            
+            # Convert all column names to lowercase
+            df.columns = [col.lower() for col in df.columns]
+            
+            # Convert DataFrame back to CSV
+            csv_buffer = StringIO()
+            df.to_csv(csv_buffer, index=False)
+            
+            # Write transformed data back to S3
+            output_file_key = file_key.replace(input_prefix, output_prefix)
+            s3.put_object(Bucket=bucket_name, Key=output_file_key, Body=csv_buffer.getvalue())
+            
+            print(f"Transformed file saved to: {output_file_key}")
